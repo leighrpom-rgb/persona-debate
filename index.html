@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Persona Debate - Stress-test your product ideas</title>
+  <script src="config.js"></script>
+  <script src="config-keys.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --persona-1: #6366f1;
+      --persona-2: #0ea5e9;
+      --persona-3: #10b981;
+      --persona-4: #f59e0b;
+      --persona-5: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .app-header .subtitle {
+      margin: 0.25rem 0 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .layout {
+      display: flex;
+      max-width: 1600px;
+      margin: 0 auto;
+      min-height: calc(100vh - 80px);
+    }
+
+    .history-sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: width 0.2s, min-width 0.2s;
+      overflow: hidden;
+    }
+
+    .history-sidebar.collapsed {
+      width: 48px;
+      min-width: 48px;
+    }
+
+    .history-sidebar .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      min-height: 48px;
+    }
+
+    .history-sidebar .sidebar-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .history-sidebar.collapsed .sidebar-title,
+    .history-sidebar.collapsed .history-list,
+    .history-sidebar.collapsed .history-sidebar-footer {
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .history-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.35rem;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .history-toggle:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .history-toggle:active {
+      transform: scale(0.95);
+    }
+
+    .history-list {
+      padding: 0.5rem;
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+    }
+
+    .history-sidebar-footer {
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    #clearHistoryBtn {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    #clearHistoryBtn:hover {
+      color: var(--text);
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+
+    .history-item {
+      display: block;
+      width: 100%;
+      padding: 0.6rem 0.5rem;
+      margin-bottom: 0.35rem;
+      text-align: left;
+      font-size: 0.8rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .history-item:hover {
+      background: #eef2ff;
+      border-color: var(--primary-light);
+      box-shadow: 0 1px 3px rgba(99, 102, 241, 0.12);
+    }
+
+    .history-item-new .history-item-badge {
+      display: inline-block;
+    }
+
+    .history-item-badge {
+      display: none;
+      position: absolute;
+      top: 0.35rem;
+      right: 0.35rem;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.12);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .history-item-title {
+      font-weight: 500;
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-date {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .history-empty {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      overflow: auto;
+    }
+
+    @media (max-width: 900px) {
+      .main-content {
+        flex-direction: column;
+      }
+    }
+
+    .column {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.75rem;
+    }
+
+    .input-section textarea {
+      width: 100%;
+      min-height: 100px;
+      max-height: 320px;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.95rem;
+      resize: none;
+      overflow-y: auto;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-section textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .personas-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .persona-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--persona-1);
+      padding: 0.75rem 1rem;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .persona-card:nth-child(1) { border-left-color: var(--persona-1); }
+    .persona-card:nth-child(2) { border-left-color: var(--persona-2); }
+    .persona-card:nth-child(3) { border-left-color: var(--persona-3); }
+    .persona-card:nth-child(4) { border-left-color: var(--persona-4); }
+    .persona-card:nth-child(5) { border-left-color: var(--persona-5); }
+
+    .persona-card:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .persona-card input {
+      width: 100%;
+      padding: 0.4rem 0;
+      border: none;
+      border-bottom: 1px solid transparent;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .persona-card input:focus {
+      outline: none;
+      border-bottom-color: var(--border);
+    }
+
+    .persona-card .persona-perspective {
+      width: 100%;
+      min-height: 60px;
+      padding: 0.5rem 0;
+      border: none;
+      font-family: inherit;
+      font-size: 0.875rem;
+      resize: vertical;
+      background: transparent;
+    }
+
+    .persona-card .persona-perspective:focus {
+      outline: none;
+    }
+
+    .persona-card .persona-perspective::placeholder {
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+
+    #generateBtn {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+      position: relative;
+    }
+
+    #generateBtn:hover:not(:disabled) {
+      background: var(--primary-dark);
+    }
+
+    #generateBtn:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    #generateBtn:disabled {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    #generateBtn .btn-text {
+      display: inline-block;
+      transition: opacity 0.2s ease;
+    }
+
+    #generateBtn .btn-spinner {
+      display: none;
+      width: 1.1em;
+      height: 1.1em;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    #generateBtn.loading .btn-text {
+      opacity: 0.9;
+    }
+
+    #generateBtn.loading .btn-spinner {
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      padding: 0.5rem 0;
+      min-height: 1.5rem;
+    }
+
+    .status-wrap .status-top-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .status-wrap.loading .status-spinner {
+      display: block;
+    }
+
+    .status-wrap.loading {
+      color: var(--primary);
+    }
+
+    #status.ready { color: var(--text-muted); }
+    #status.loading { color: var(--primary); }
+    #status.error { color: #dc2626; }
+    #status.success { color: #16a34a; }
+
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .status-wrap.loading #status {
+      animation: pulse-subtle 1.2s ease-in-out infinite;
+    }
+
+    .char-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      text-align: right;
+    }
+
+    .char-count.warn {
+      color: #dc2626;
+    }
+
+    .status-message-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .status-retry-btn {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.8rem;
+      color: var(--primary);
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid var(--primary-light);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .status-retry-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    .status-details-container {
+      display: none;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+
+    .status-details-toggle {
+      font-size: 0.75rem;
+      color: var(--primary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.2rem 0;
+      text-decoration: underline;
+    }
+
+    .status-details-toggle:hover {
+      color: var(--primary-dark);
+    }
+
+    .status-details-content {
+      display: none;
+      margin: 0.35rem 0 0;
+      padding: 0.5rem;
+      font-size: 0.7rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      max-height: 120px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .status-details-container.expanded .status-details-content {
+      display: block;
+    }
+
+    .status-details-container.expanded .status-details-toggle {
+      margin-bottom: 0.25rem;
+    }
+
+    #resetAppBtn {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.35rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    #resetAppBtn:hover {
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .output-section .card {
+      min-height: 120px;
+    }
+
+    #conversation {
+      min-height: 200px;
+    }
+
+    .bubble {
+      max-width: 90%;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid var(--persona-1);
+      opacity: 0;
+      animation: bubble-fade-in 0.35s ease forwards;
+    }
+
+    .bubble:nth-child(1) { animation-delay: 0.05s; }
+    .bubble:nth-child(2) { animation-delay: 0.1s; }
+    .bubble:nth-child(3) { animation-delay: 0.15s; }
+    .bubble:nth-child(4) { animation-delay: 0.2s; }
+    .bubble:nth-child(5) { animation-delay: 0.25s; }
+    .bubble:nth-child(6) { animation-delay: 0.3s; }
+    .bubble:nth-child(7) { animation-delay: 0.35s; }
+    .bubble:nth-child(8) { animation-delay: 0.4s; }
+    .bubble:nth-child(9) { animation-delay: 0.45s; }
+    .bubble:nth-child(10) { animation-delay: 0.5s; }
+    .bubble:nth-child(n+11) { animation-delay: 0.55s; }
+
+    @keyframes bubble-fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bubble .bubble-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.35rem;
+    }
+
+    .bubble .bubble-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .bubble[data-persona="0"] { border-left-color: var(--persona-1); }
+    .bubble[data-persona="1"] { border-left-color: var(--persona-2); }
+    .bubble[data-persona="2"] { border-left-color: var(--persona-3); }
+    .bubble[data-persona="3"] { border-left-color: var(--persona-4); }
+    .bubble[data-persona="4"] { border-left-color: var(--persona-5); }
+
+    #summary {
+      min-height: 80px;
+    }
+
+    .summary-block {
+      margin-bottom: 1.25rem;
+    }
+
+    .summary-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .summary-heading {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.5rem;
+    }
+
+    .summary-list {
+      margin: 0;
+      padding-left: 1.25rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .summary-list li {
+      margin-bottom: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Persona Debate</h1>
+    <p class="subtitle">Stress-test your product ideas</p>
+  </header>
+
+  <div class="layout">
+    <aside id="history" class="history-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Saved debates</span>
+        <button type="button" class="history-toggle" id="historyToggle" aria-label="Toggle sidebar">◀</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+      <div class="history-sidebar-footer">
+        <button type="button" id="clearHistoryBtn">Clear History</button>
+        <button type="button" id="resetAppBtn">Reset App</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section class="column input-section">
+        <div class="card">
+          <h2 class="card-title">Product idea</h2>
+          <textarea id="productIdea" placeholder="Describe your product idea..." rows="4" maxlength="5000"></textarea>
+          <div id="productIdeaCount" class="char-count">0 characters</div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Personas</h2>
+          <div class="personas-container">
+            <div class="persona-card">
+              <input type="text" class="persona-name" value="Skeptical Engineer" placeholder="Persona name">
+              <textarea class="persona-perspective" placeholder="Their perspective or concerns..."></textarea>
+            </div>
+            <div class="persona-card">
+              <input type="text" class="persona-name" value="Budget-Conscious Buyer" placeholder="Persona name">
+              <textarea class="persona-perspective" placeholder="Their perspective or concerns..."></textarea>
+            </div>
+            <div class="persona-card">
+              <input type="text" class="persona-name" value="Power User" placeholder="Persona name">
+              <textarea class="persona-perspective" placeholder="Their perspective or concerns..."></textarea>
+            </div>
+            <div class="persona-card">
+              <input type="text" class="persona-name" value="First-Time User" placeholder="Persona name">
+              <textarea class="persona-perspective" placeholder="Their perspective or concerns..."></textarea>
+            </div>
+            <div class="persona-card">
+              <input type="text" class="persona-name" value="Executive Sponsor" placeholder="Persona name">
+              <textarea class="persona-perspective" placeholder="Their perspective or concerns..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <button type="button" id="generateBtn">
+            <span class="btn-spinner" aria-hidden="true"></span>
+            <span class="btn-text">Generate Debate</span>
+          </button>
+          <div id="statusWrap" class="status-wrap">
+            <div class="status-top-row">
+              <span id="statusSpinner" class="status-spinner" aria-hidden="true"></span>
+              <div class="status-message-row">
+                <span id="status">Ready</span>
+                <button type="button" id="retryBtn" class="status-retry-btn" style="display: none;">Retry</button>
+              </div>
+            </div>
+            <div id="statusDetailsContainer" class="status-details-container">
+              <button type="button" id="statusDetailsToggle" class="status-details-toggle">Show details</button>
+              <pre id="statusDetails" class="status-details-content"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="column output-section">
+        <div class="card">
+          <h2 class="card-title">Conversation</h2>
+          <div id="conversation"></div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Summary</h2>
+          <div id="summary"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const generateBtn = document.getElementById('generateBtn');
+      const statusEl = document.getElementById('status');
+      const historySidebar = document.getElementById('history');
+      const historyToggle = document.getElementById('historyToggle');
+      const productIdeaEl = document.getElementById('productIdea');
+      const conversationEl = document.getElementById('conversation');
+      const summaryEl = document.getElementById('summary');
+      const historyListEl = document.getElementById('historyList');
+      const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      const statusWrapEl = document.getElementById('statusWrap');
+      const productIdeaCountEl = document.getElementById('productIdeaCount');
+      const retryBtn = document.getElementById('retryBtn');
+      const statusDetailsContainer = document.getElementById('statusDetailsContainer');
+      const statusDetailsToggle = document.getElementById('statusDetailsToggle');
+      const statusDetailsEl = document.getElementById('statusDetails');
+      const resetAppBtn = document.getElementById('resetAppBtn');
+
+      const PERSONA_BORDER_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6'];
+      const STORAGE_KEY = 'personaDebates';
+      const PRODUCT_IDEA_MAX_HEIGHT = 320;
+      const PRODUCT_IDEA_MAX_LENGTH = 5000;
+
+      function hideErrorUI() {
+        if (retryBtn) retryBtn.style.display = 'none';
+        if (statusDetailsContainer) {
+          statusDetailsContainer.style.display = 'none';
+          statusDetailsContainer.classList.remove('expanded');
+          if (statusDetailsToggle) statusDetailsToggle.textContent = 'Show details';
+        }
+      }
+
+      function showError(message, details) {
+        statusEl.textContent = message;
+        statusEl.className = 'error';
+        if (statusWrapEl) statusWrapEl.classList.remove('loading');
+        if (retryBtn) retryBtn.style.display = 'inline-block';
+        if (statusDetailsContainer) {
+          if (details) {
+            statusDetailsEl.textContent = typeof details === 'string' ? details : JSON.stringify(details, null, 2);
+            statusDetailsContainer.style.display = 'block';
+            statusDetailsContainer.classList.remove('expanded');
+            if (statusDetailsToggle) {
+              statusDetailsToggle.textContent = 'Show details';
+              statusDetailsToggle.style.display = 'inline-block';
+            }
+          } else {
+            statusDetailsContainer.style.display = 'none';
+          }
+        }
+        console.error('[Persona Debate]', new Date().toISOString(), '–', message, details !== undefined ? { details: details } : '');
+      }
+
+      function updateStatus(message, type) {
+        statusEl.textContent = message;
+        statusEl.className = type || 'ready';
+        if (type !== 'error') hideErrorUI();
+      }
+
+      function setLoading(isLoading) {
+        if (statusWrapEl) statusWrapEl.classList.toggle('loading', isLoading);
+        if (generateBtn) {
+          generateBtn.classList.toggle('loading', isLoading);
+          generateBtn.disabled = isLoading;
+          var btnText = generateBtn.querySelector('.btn-text');
+          if (btnText) btnText.textContent = isLoading ? 'Generating...' : 'Generate Debate';
+        }
+        var inputs = document.querySelectorAll('#productIdea, .persona-name, .persona-perspective');
+        inputs.forEach(function (el) { if (el) el.disabled = isLoading; });
+        if (isLoading) hideErrorUI();
+      }
+
+      function getPersonas() {
+        const cards = document.querySelectorAll('.persona-card');
+        return Array.from(cards).map(function (card) {
+          const nameInput = card.querySelector('.persona-name');
+          const perspectiveInput = card.querySelector('.persona-perspective');
+          return {
+            name: (nameInput && nameInput.value || '').trim(),
+            perspective: (perspectiveInput && perspectiveInput.value || '').trim()
+          };
+        });
+      }
+
+      function sanitizeProductIdea(str) {
+        if (typeof str !== 'string') return '';
+        return str.trim().slice(0, PRODUCT_IDEA_MAX_LENGTH);
+      }
+
+      function buildDebatePrompt(productIdea, personas) {
+        var safeIdea = sanitizeProductIdea(productIdea);
+        const personaList = personas.map(function (p, i) {
+          var line = (i + 1) + '. ' + (p.name || '').trim();
+          if (p.perspective) line += ' – ' + (p.perspective || '').trim();
+          return line;
+        }).join('\n');
+        return 'Product idea to debate:\n\n' + safeIdea + '\n\nPersonas (argue from these perspectives; perspectives can be empty):\n' + personaList + '\n\nGenerate a realistic 8–10 message debate among these 5 personas about this product idea. Each persona should argue from their defined perspective. Include genuine disagreements, pushback, and different viewpoints. End with a synthesis of key tensions, strongest objections, and potential insights.\n\nReturn valid JSON only, no other text, with this exact structure:\n{\n  "messages": [{"persona": "<persona name>", "message": "<what they said>"}],\n  "summary": {"tensions": ["string"], "objections": ["string"], "insights": ["string"]}\n}';
+      }
+
+      function normalizeDebateData(parsed) {
+        var messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+        var summary = parsed && typeof parsed.summary === 'object' && parsed.summary !== null ? parsed.summary : {};
+        var hasMessages = messages.length > 0;
+        var hasSummary = summary && (Array.isArray(summary.tensions) || Array.isArray(summary.objections) || Array.isArray(summary.insights));
+        if (!hasMessages && !hasSummary) return { data: null, partial: false, error: 'Response missing messages and summary' };
+        var data = {
+          messages: messages.filter(function (m) { return m && (m.persona != null || m.message != null); }),
+          summary: {
+            tensions: Array.isArray(summary.tensions) ? summary.tensions : [],
+            objections: Array.isArray(summary.objections) ? summary.objections : [],
+            insights: Array.isArray(summary.insights) ? summary.insights : []
+          }
+        };
+        var partial = !hasMessages || !hasSummary;
+        return { data: data, partial: partial };
+      }
+
+      function extractOutputText(apiResponse) {
+        var output = apiResponse.output || [];
+        var i, item, content, j, part;
+        for (i = 0; i < output.length; i++) {
+          item = output[i];
+          if (item.type === 'message' && item.content && Array.isArray(item.content)) {
+            for (j = 0; j < item.content.length; j++) {
+              part = item.content[j];
+              if (part.type === 'output_text' && typeof part.text === 'string') return part.text;
+            }
+          }
+        }
+        return '';
+      }
+
+      function displayDebate(data) {
+        conversationEl.innerHTML = '';
+        if (!data.messages || !Array.isArray(data.messages)) return;
+        var personaIndex = {};
+        var colorIndex;
+        data.messages.forEach(function (msg) {
+          var persona = (msg.persona || '').trim();
+          if (personaIndex[persona] === undefined) {
+            colorIndex = Object.keys(personaIndex).length;
+            personaIndex[persona] = Math.min(colorIndex, PERSONA_BORDER_COLORS.length - 1);
+          }
+          colorIndex = personaIndex[persona];
+          var bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.setAttribute('data-persona', String(colorIndex));
+          bubble.innerHTML = '<div class="bubble-name">' + escapeHtml(persona) + '</div><div class="bubble-text">' + escapeHtml(msg.message || '') + '</div>';
+          conversationEl.appendChild(bubble);
+        });
+
+        summaryEl.innerHTML = '';
+        var summary = data.summary;
+        if (!summary) return;
+        if (summary.tensions && summary.tensions.length) {
+          summaryEl.appendChild(makeSummaryBlock('Key tensions', summary.tensions));
+        }
+        if (summary.objections && summary.objections.length) {
+          summaryEl.appendChild(makeSummaryBlock('Strongest objections', summary.objections));
+        }
+        if (summary.insights && summary.insights.length) {
+          summaryEl.appendChild(makeSummaryBlock('Potential insights', summary.insights));
+        }
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function makeSummaryBlock(title, items) {
+        var block = document.createElement('div');
+        block.className = 'summary-block';
+        var heading = document.createElement('h3');
+        heading.className = 'summary-heading';
+        heading.textContent = title;
+        block.appendChild(heading);
+        var list = document.createElement('ul');
+        list.className = 'summary-list';
+        items.forEach(function (item) {
+          var li = document.createElement('li');
+          li.textContent = item;
+          list.appendChild(li);
+        });
+        block.appendChild(list);
+        return block;
+      }
+
+      function loadDebates() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw === null || raw === undefined) return [];
+          return JSON.parse(raw);
+        } catch (err) {
+          console.error('[loadDebates] Failed to load from localStorage – key:', STORAGE_KEY, 'error:', err);
+          return [];
+        }
+      }
+
+      function saveDebate(productIdea, personas, debateData) {
+        try {
+          var list = loadDebates();
+          if (!Array.isArray(list)) list = [];
+          var debate = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            productIdea: productIdea,
+            personas: personas,
+            debateData: debateData
+          };
+          list.unshift(debate);
+          var max = (typeof CONFIG !== 'undefined' && CONFIG.MAX_SAVED_RUNS != null) ? CONFIG.MAX_SAVED_RUNS : 20;
+          if (list.length > max) list = list.slice(0, max);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          refreshHistory();
+        } catch (err) {
+          console.error('[saveDebate] Failed to save to localStorage – key:', STORAGE_KEY, 'error:', err);
+          updateStatus('Debate generated! (Could not save to history)', 'success');
+        }
+      }
+
+      function refreshHistory() {
+        if (!historyListEl) return;
+        historyListEl.innerHTML = '';
+        var debates = loadDebates();
+        if (!debates || debates.length === 0) {
+          var empty = document.createElement('p');
+          empty.className = 'history-empty';
+          empty.textContent = 'No saved debates yet';
+          historyListEl.appendChild(empty);
+          return;
+        }
+        debates.forEach(function (debate, index) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'history-item' + (index === 0 ? ' history-item-new' : '');
+          var title = (debate.productIdea || '').trim();
+          var truncated = title.length > 50 ? title.slice(0, 50) + '…' : title;
+          var dateStr = '';
+          if (debate.timestamp) {
+            try {
+              var d = new Date(debate.timestamp);
+              dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (_) {
+              dateStr = debate.timestamp;
+            }
+          }
+          btn.innerHTML = '<span class="history-item-title">' + escapeHtml(truncated) + '</span><span class="history-item-date">' + escapeHtml(dateStr) + '</span>' + (index === 0 ? '<span class="history-item-badge">New</span>' : '');
+          btn.addEventListener('click', function () { loadSavedDebate(debate); });
+          historyListEl.appendChild(btn);
+        });
+      }
+
+      function loadSavedDebate(debate) {
+        if (productIdeaEl) productIdeaEl.value = debate.productIdea || '';
+        var cards = document.querySelectorAll('.persona-card');
+        var personas = debate.personas || [];
+        cards.forEach(function (card, i) {
+          var p = personas[i] || {};
+          var nameInput = card.querySelector('.persona-name');
+          var perspectiveInput = card.querySelector('.persona-perspective');
+          if (nameInput) nameInput.value = p.name || '';
+          if (perspectiveInput) perspectiveInput.value = p.perspective || '';
+        });
+        if (debate.debateData) displayDebate(debate.debateData);
+        updateStatus('Loaded saved debate', 'success');
+      }
+
+      async function generateDebate() {
+        var rawIdea = (productIdeaEl && productIdeaEl.value || '').trim();
+        var productIdea = sanitizeProductIdea(rawIdea);
+        if (rawIdea.length > PRODUCT_IDEA_MAX_LENGTH && productIdeaCountEl) {
+          productIdeaCountEl.classList.add('warn');
+        } else if (productIdeaCountEl) {
+          productIdeaCountEl.classList.remove('warn');
+        }
+
+        if (!productIdea) {
+          updateStatus('Please enter a product idea.', 'error');
+          return;
+        }
+
+        var personas = getPersonas();
+        var missingName = personas.findIndex(function (p) { return !p.name; });
+        if (missingName !== -1) {
+          updateStatus('Please fill in all persona names (persona ' + (missingName + 1) + ').', 'error');
+          return;
+        }
+
+        setLoading(true);
+        updateStatus('Generating debate...', 'loading');
+
+        var prompt = buildDebatePrompt(productIdea, personas);
+        var endpoint = (typeof CONFIG !== 'undefined' && CONFIG.OPENAI_ENDPOINT) ? CONFIG.OPENAI_ENDPOINT : 'https://api.openai.com/v1/responses';
+        var model = (typeof CONFIG !== 'undefined' && CONFIG.OPENAI_MODEL) ? CONFIG.OPENAI_MODEL : 'gpt-4.1-mini';
+        var apiKey = (typeof CONFIG_KEYS !== 'undefined' && CONFIG_KEYS.OPENAI_API_KEY) ? CONFIG_KEYS.OPENAI_API_KEY : '';
+        var body = {
+          model: model,
+          input: prompt,
+          instructions: 'You must respond with valid JSON only. No markdown, no code fences, no explanation—only a single JSON object matching the required structure.'
+        };
+
+        console.log('[generateDebate] Before fetch – endpoint:', endpoint, 'model:', model, 'input length:', (prompt && prompt.length) || 0);
+
+        try {
+          var response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify(body)
+          });
+
+          console.log('[generateDebate] After response – ok:', response.ok, 'status:', response.status);
+
+          if (!response.ok) {
+            var status = response.status;
+            var errorBody = await response.text();
+            console.error('[generateDebate] HTTP error – status:', status, 'body:', errorBody);
+            var errMsg = 'API error';
+            if (status === 401) errMsg = 'Invalid API key - check your config-keys.js file';
+            else if (status === 429) errMsg = 'Rate limited - wait a minute and try again';
+            else if (status >= 500) errMsg = 'OpenAI service error - try again in a few minutes';
+            else {
+              try {
+                var errJson = JSON.parse(errorBody);
+                if (errJson.error && errJson.error.message) errMsg = errJson.error.message;
+              } catch (_) {
+                if (errorBody.length < 200) errMsg = errorBody || errMsg;
+              }
+            }
+            showError(errMsg, errorBody.length > 500 ? errorBody.slice(0, 500) + '…' : errorBody);
+            return;
+          }
+
+          var responseData = await response.json();
+          console.log('[generateDebate] After parsing – has output:', !!(responseData && responseData.output));
+
+          var rawText = extractOutputText(responseData);
+          if (!rawText) {
+            showError('No debate text in API response.', responseData.output ? JSON.stringify(responseData.output).slice(0, 800) : undefined);
+            return;
+          }
+          rawText = rawText.replace(/^[\s\S]*?```(?:json)?\s*/i, '').replace(/\s*```[\s\S]*$/, '').trim();
+
+          var parsed;
+          try {
+            parsed = JSON.parse(rawText);
+          } catch (parseErr) {
+            showError('Unexpected response format', rawText.slice(0, 2000));
+            return;
+          }
+
+          var result = normalizeDebateData(parsed);
+          if (result.error && !result.data) {
+            showError('Unexpected response format', rawText.slice(0, 2000));
+            return;
+          }
+
+          var data = result.data;
+          displayDebate(data);
+          if (result.partial) {
+            showError('Partial results – some data was missing from the response.', result.error || 'Messages or summary incomplete.');
+          } else {
+            updateStatus('Debate generated!', 'success');
+          }
+          saveDebate(productIdea, personas, data);
+        } catch (err) {
+          var isNetwork = err.name === 'TypeError' && (err.message.indexOf('fetch') !== -1 || err.message.indexOf('network') !== -1);
+          if (isNetwork) {
+            showError('Network error - check your internet connection');
+          } else {
+            showError('Something went wrong.', err.message + (err.stack ? '\n' + err.stack : ''));
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      generateBtn.addEventListener('click', function () {
+        generateDebate();
+      });
+
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function () {
+          generateDebate();
+        });
+      }
+
+      if (statusDetailsToggle && statusDetailsContainer) {
+        statusDetailsToggle.addEventListener('click', function () {
+          var expanded = statusDetailsContainer.classList.toggle('expanded');
+          statusDetailsToggle.textContent = expanded ? 'Hide details' : 'Show details';
+        });
+      }
+
+      historyToggle.addEventListener('click', function () {
+        historySidebar.classList.toggle('collapsed');
+        historyToggle.setAttribute('aria-label',
+          historySidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar');
+        historyToggle.textContent = historySidebar.classList.contains('collapsed') ? '▶' : '◀';
+      });
+
+      if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', function () {
+          if (!confirm('Clear all saved debates? This cannot be undone.')) return;
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            refreshHistory();
+            updateStatus('History cleared', 'success');
+          } catch (err) {
+            console.error('[clearHistory] Failed to clear localStorage – key:', STORAGE_KEY, 'error:', err);
+            updateStatus('Failed to clear history', 'error');
+          }
+        });
+      }
+
+      if (resetAppBtn) {
+        resetAppBtn.addEventListener('click', function () {
+          if (!confirm('Reset app? This will clear all saved data and reload the page.')) return;
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.clear();
+            location.reload();
+          } catch (err) {
+            console.error('[resetApp] Failed to clear storage – error:', err);
+            showError('Could not reset app.', err.message);
+          }
+        });
+      }
+
+      function updateCharCount() {
+        if (!productIdeaCountEl || !productIdeaEl) return;
+        var n = (productIdeaEl.value || '').length;
+        productIdeaCountEl.textContent = n + ' character' + (n !== 1 ? 's' : '');
+        if (n >= PRODUCT_IDEA_MAX_LENGTH) productIdeaCountEl.classList.add('warn');
+        else productIdeaCountEl.classList.remove('warn');
+      }
+
+      function autoResizeProductIdea() {
+        if (!productIdeaEl) return;
+        productIdeaEl.style.height = 'auto';
+        var h = productIdeaEl.scrollHeight;
+        productIdeaEl.style.height = Math.min(h, PRODUCT_IDEA_MAX_HEIGHT) + 'px';
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          var t = e.target;
+          if (t && (t.id === 'productIdea' || t.classList.contains('persona-name') || t.classList.contains('persona-perspective'))) {
+            e.preventDefault();
+            generateDebate();
+          }
+        }
+      });
+
+      if (productIdeaEl) {
+        productIdeaEl.addEventListener('input', function () {
+          updateCharCount();
+          autoResizeProductIdea();
+        });
+        productIdeaEl.addEventListener('focus', autoResizeProductIdea);
+      }
+      updateCharCount();
+      autoResizeProductIdea();
+
+      document.addEventListener('DOMContentLoaded', function () {
+        refreshHistory();
+        updateCharCount();
+        autoResizeProductIdea();
+      });
+      refreshHistory();
+
+      updateStatus('Ready', 'ready');
+    })();
+  </script>
+</body>
+</html>
